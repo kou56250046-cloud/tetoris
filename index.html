@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TETRIS</title>
+<meta name="theme-color" content="#080812">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TETRIS">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -290,6 +295,7 @@
     background:linear-gradient(100deg, #07AEB7, var(--pink));
     color:#fff;
   }
+  .mobile-tabs{display:none;}
 
   /* ranking modal */
   .modal-backdrop{
@@ -385,40 +391,75 @@
   .setting-row input:checked + .switch::after{transform:translateX(18px);background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
 
   @media (max-width:760px){
-    body{padding:10px;align-items:flex-start;padding-top:14px;}
+    html,body{overflow:hidden;}
+    body{height:100dvh;padding:8px;align-items:stretch;}
     .app{
       flex-direction:column;
       align-items:center;
+      height:100%;
       gap:10px;
+      overflow:hidden;
     }
-    .side{
-      flex-direction:row;
+    .mobile-tabs{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:6px;
       width:100%;
       max-width:340px;
-      justify-content:space-between;
-      gap:8px;
+      flex:0 0 34px;
     }
-    .side.right{order:3;}
-    .panel{flex:1;padding:10px 8px;border-radius:16px;}
+    .mobile-tabs button{
+      padding:0;
+      border-radius:7px;
+      font-size:11px;
+      letter-spacing:.1em;
+      color:var(--sub);
+      background:rgba(19,18,39,.8);
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:none;
+    }
+    .mobile-tabs button.active{
+      color:var(--cyan);
+      border-color:rgba(45,226,230,.5);
+      background:rgba(45,226,230,.12);
+      box-shadow:0 0 14px rgba(45,226,230,.12);
+    }
+    .side{
+      display:none;
+    }
+    .board-wrap{width:100%;flex:1;min-height:0;gap:6px;}
+    .brand-row{flex:0 0 36px;max-width:340px;}
+    .panel{padding:10px 8px;border-radius:10px;min-width:0;}
     .panel-label{font-size:9.5px;margin-bottom:5px;}
     .stat-value{font-size:20px;}
     .stat-value.small{font-size:16px;}
     .mini-cell{width:11px;height:11px;}
-    .mobile-controls{display:flex;}
+    .mobile-controls{display:flex;flex:0 0 46px;}
     .controls-hint{display:none;}
     .brand{font-size:21px;}
-    #board{max-width:100%;height:auto;}
-    .board-shell{width:100%;max-width:340px;}
+    .board-shell{width:auto;max-width:100%;max-height:calc(100dvh - 156px);padding:6px;}
+    #board{width:auto;max-width:100%;height:min(calc(100dvh - 214px),480px);}
+    .app.mobile-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:34px repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;}
+    .app.mobile-info .mobile-tabs{grid-column:1/-1;}
+    .app.mobile-info .board-wrap{display:none;}
+    .app.mobile-info .side{display:contents;}
+    .app.mobile-info .panel{display:flex;flex-direction:column;justify-content:center;}
   }
   @media (max-width:400px){
-    .side{max-width:300px;}
-    .board-shell{max-width:300px;}
+    .mobile-tabs,.brand-row,.board-shell,.mobile-controls{max-width:300px;}
+    .mobile-controls{gap:4px;}
+    .mobile-controls button{width:44px;}
   }
 </style>
 </head>
 <body>
 
 <div class="app">
+
+  <div class="mobile-tabs" role="tablist" aria-label="画面切り替え">
+    <button class="active" id="playTab" role="tab" aria-selected="true">PLAY</button>
+    <button id="infoTab" role="tab" aria-selected="false">INFO</button>
+  </div>
 
   <div class="side left">
     <div class="panel">
@@ -1177,6 +1218,24 @@
   bindHold('mRotate', tryRotate, false);
   bindHold('mDrop', hardDrop, false);
   bindHold('mHold', hold, false);
+
+  const app = document.querySelector('.app');
+  const playTab = document.getElementById('playTab');
+  const infoTab = document.getElementById('infoTab');
+  function setMobileView(view){
+    const isInfo = view === 'info';
+    app.classList.toggle('mobile-info', isInfo);
+    playTab.classList.toggle('active', !isInfo);
+    infoTab.classList.toggle('active', isInfo);
+    playTab.setAttribute('aria-selected', String(!isInfo));
+    infoTab.setAttribute('aria-selected', String(isInfo));
+  }
+  playTab.addEventListener('click', ()=>setMobileView('play'));
+  infoTab.addEventListener('click', ()=>setMobileView('info'));
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
 
   resetGame();
   renderSide();
