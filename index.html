@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>TETRIS</title>
 <meta name="theme-color" content="#080812">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -53,6 +53,10 @@
     align-items:center;
     justify-content:center;
     padding:16px;
+    padding-top:max(16px, env(safe-area-inset-top));
+    padding-bottom:max(16px, env(safe-area-inset-bottom));
+    padding-left:max(16px, env(safe-area-inset-left));
+    padding-right:max(16px, env(safe-area-inset-right));
   }
   h1,.brand{font-family:'Space Grotesk',sans-serif;}
 
@@ -290,6 +294,10 @@
     font-size:17px;
     border-radius:8px;
     padding:0;
+    touch-action:none;
+    -webkit-touch-callout:none;
+    user-select:none;
+    flex-shrink:0;
   }
   .mobile-controls button.primary{
     background:linear-gradient(100deg, #07AEB7, var(--pink));
@@ -392,12 +400,16 @@
 
   @media (max-width:760px){
     html,body{overflow:hidden;}
-    body{height:100dvh;padding:8px;align-items:stretch;}
+    body{
+      height:100dvh;
+      padding:max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      align-items:stretch;
+    }
     .app{
       flex-direction:column;
       align-items:center;
       height:100%;
-      gap:10px;
+      gap:8px;
       overflow:hidden;
     }
     .mobile-tabs{
@@ -406,7 +418,7 @@
       gap:6px;
       width:100%;
       max-width:340px;
-      flex:0 0 34px;
+      flex:0 0 32px;
     }
     .mobile-tabs button{
       padding:0;
@@ -417,6 +429,7 @@
       background:rgba(19,18,39,.8);
       border:1px solid rgba(255,255,255,.1);
       box-shadow:none;
+      touch-action:manipulation;
     }
     .mobile-tabs button.active{
       color:var(--cyan);
@@ -428,18 +441,18 @@
       display:none;
     }
     .board-wrap{width:100%;flex:1;min-height:0;gap:6px;}
-    .brand-row{flex:0 0 36px;max-width:340px;}
+    .brand-row{flex:0 0 34px;max-width:340px;}
     .panel{padding:10px 8px;border-radius:10px;min-width:0;}
     .panel-label{font-size:9.5px;margin-bottom:5px;}
     .stat-value{font-size:20px;}
     .stat-value.small{font-size:16px;}
     .mini-cell{width:11px;height:11px;}
-    .mobile-controls{display:flex;flex:0 0 46px;}
+    .mobile-controls{display:flex;flex:0 0 52px;}
     .controls-hint{display:none;}
     .brand{font-size:21px;}
-    .board-shell{width:auto;max-width:100%;max-height:calc(100dvh - 156px);padding:6px;}
-    #board{width:auto;max-width:100%;height:min(calc(100dvh - 214px),480px);}
-    .app.mobile-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:34px repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;}
+    .board-shell{width:auto;max-width:100%;max-height:calc(100dvh - 130px);padding:6px;}
+    #board{width:auto;max-width:100%;height:min(calc(100dvh - 188px),460px);}
+    .app.mobile-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:32px repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;}
     .app.mobile-info .mobile-tabs{grid-column:1/-1;}
     .app.mobile-info .board-wrap{display:none;}
     .app.mobile-info .side{display:contents;}
@@ -1197,20 +1210,27 @@
   function bindHold(id, fn, repeat){
     const btn = document.getElementById(id);
     let interval;
+    let active = false;
     const start = (ev)=>{
       ev.preventDefault();
+      if(active) return;
+      active = true;
+      btn.setPointerCapture && ev.pointerId!=null && btn.setPointerCapture(ev.pointerId);
       if(gameOver||!running||paused) return;
       fn();
       if(repeat){
         interval = setInterval(fn, 120);
       }
     };
-    const stop = ()=>{ clearInterval(interval); };
-    btn.addEventListener('touchstart', start, {passive:false});
-    btn.addEventListener('mousedown', start);
-    btn.addEventListener('touchend', stop);
-    btn.addEventListener('mouseup', stop);
-    btn.addEventListener('mouseleave', stop);
+    const stop = ()=>{
+      active = false;
+      clearInterval(interval);
+    };
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', stop);
+    btn.addEventListener('pointercancel', stop);
+    btn.addEventListener('pointerleave', stop);
+    btn.addEventListener('contextmenu', (ev)=>ev.preventDefault());
   }
   bindHold('mLeft', ()=>tryMove(-1,0), true);
   bindHold('mRight', ()=>tryMove(1,0), true);
