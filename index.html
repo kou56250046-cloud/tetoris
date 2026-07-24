@@ -181,22 +181,24 @@
     border-radius:8px;
     padding:8px 12px;
     cursor:pointer;
-    background:rgba(45,226,230,.08);
+    background:rgba(45,226,230,.14);
     color:var(--cyan);
-    border:1px solid rgba(45,226,230,.35);
-    box-shadow:0 0 14px rgba(45,226,230,.1);
+    border:1.5px solid rgba(45,226,230,.5);
+    box-shadow:0 0 14px rgba(45,226,230,.16);
   }
+  .rank-btn:active{background:rgba(45,226,230,.28);transform:scale(.95);}
   .header-actions{display:flex;gap:6px;}
   .icon-btn{
-    width:36px;
-    height:36px;
+    width:40px;
+    height:40px;
     padding:0;
-    font-size:16px;
-    background:rgba(45,226,230,.08);
+    font-size:17px;
+    background:rgba(45,226,230,.14);
     color:var(--cyan);
-    border:1px solid rgba(45,226,230,.35);
-    box-shadow:0 0 14px rgba(45,226,230,.1);
+    border:1.5px solid rgba(45,226,230,.5);
+    box-shadow:0 0 14px rgba(45,226,230,.16);
   }
+  .icon-btn:active{background:rgba(45,226,230,.28);transform:scale(.95);}
   .board-shell{
     position:relative;
     background:#0D0C19;
@@ -281,27 +283,61 @@
 
   .mobile-controls{
     display:none;
+    flex-direction:column;
     gap:8px;
     margin-top:2px;
     width:100%;
-    justify-content:center;
+  }
+  .mobile-controls .row{
+    display:flex;
+    gap:8px;
+    width:100%;
   }
   .mobile-controls button{
-    background:var(--glass-strong);
+    flex:1;
+    background:rgba(45,226,230,.13);
     color:var(--cyan);
-    box-shadow:0 4px 12px rgba(124,92,255,.16);
-    width:50px;height:46px;
-    font-size:17px;
-    border-radius:8px;
+    border:1.5px solid rgba(45,226,230,.45);
+    box-shadow:0 0 14px rgba(45,226,230,.16), inset 0 1px 0 rgba(255,255,255,.06);
+    height:54px;
+    font-size:20px;
+    font-weight:700;
+    border-radius:12px;
     padding:0;
     touch-action:none;
     -webkit-touch-callout:none;
     user-select:none;
     flex-shrink:0;
+    transition:transform .08s ease, background .08s ease, box-shadow .08s ease;
+  }
+  .mobile-controls button:active{
+    transform:scale(.92);
+    background:rgba(45,226,230,.3);
+    box-shadow:0 0 20px rgba(45,226,230,.4);
+  }
+  .mobile-controls button#mHold{
+    background:rgba(200,108,255,.14);
+    color:var(--purple-dark);
+    border-color:rgba(200,108,255,.5);
+    box-shadow:0 0 14px rgba(155,92,255,.22), inset 0 1px 0 rgba(255,255,255,.06);
+    font-size:15px;
+    letter-spacing:.02em;
+  }
+  .mobile-controls button#mHold:active{
+    background:rgba(200,108,255,.32);
+    box-shadow:0 0 20px rgba(200,108,255,.45);
   }
   .mobile-controls button.primary{
+    flex:1.6;
     background:linear-gradient(100deg, #07AEB7, var(--pink));
     color:#fff;
+    border:none;
+    font-size:16px;
+    box-shadow:0 0 20px rgba(255,61,174,.4), 0 6px 16px rgba(0,0,0,.3);
+  }
+  .mobile-controls button.primary:active{
+    transform:scale(.92);
+    box-shadow:0 0 26px rgba(255,61,174,.6);
   }
   .mobile-tabs{display:none;}
 
@@ -447,11 +483,11 @@
     .stat-value{font-size:20px;}
     .stat-value.small{font-size:16px;}
     .mini-cell{width:11px;height:11px;}
-    .mobile-controls{display:flex;flex:0 0 52px;}
+    .mobile-controls{display:flex;flex:0 0 116px;}
     .controls-hint{display:none;}
     .brand{font-size:21px;}
-    .board-shell{width:auto;max-width:100%;max-height:calc(100dvh - 130px);padding:6px;}
-    #board{width:auto;max-width:100%;height:min(calc(100dvh - 188px),460px);}
+    .board-shell{width:auto;max-width:100%;max-height:calc(100dvh - 216px);padding:6px;}
+    #board{width:auto;max-width:100%;height:min(calc(100dvh - 254px),440px);}
     .app.mobile-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:32px repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;}
     .app.mobile-info .mobile-tabs{grid-column:1/-1;}
     .app.mobile-info .board-wrap{display:none;}
@@ -460,8 +496,9 @@
   }
   @media (max-width:400px){
     .mobile-tabs,.brand-row,.board-shell,.mobile-controls{max-width:300px;}
-    .mobile-controls{gap:4px;}
-    .mobile-controls button{width:44px;}
+    .mobile-controls{flex:0 0 108px;}
+    .mobile-controls .row{gap:6px;}
+    .mobile-controls button{height:50px;font-size:18px;}
   }
 </style>
 </head>
@@ -518,12 +555,16 @@
       <span class="key"><b>P</b> 一時停止</span>
     </div>
     <div class="mobile-controls">
-      <button id="mLeft">←</button>
-      <button id="mRotate">↻</button>
-      <button id="mRight">→</button>
-      <button id="mDown">↓</button>
-      <button id="mHold">Hold</button>
-      <button class="primary" id="mDrop">Drop</button>
+      <div class="row">
+        <button id="mLeft" aria-label="左に移動">←</button>
+        <button id="mRotate" aria-label="回転">↻</button>
+        <button id="mRight" aria-label="右に移動">→</button>
+        <button id="mDown" aria-label="ソフトドロップ">↓</button>
+      </div>
+      <div class="row">
+        <button id="mHold" aria-label="ホールド">Hold</button>
+        <button class="primary" id="mDrop" aria-label="ハードドロップ">Drop</button>
+      </div>
     </div>
   </div>
 
