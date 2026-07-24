@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tetris-neon-v2';
+const CACHE_NAME = 'tetris-neon-v3';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -21,6 +21,9 @@ self.addEventListener('activate', (event) => {
 // オフライン時のみキャッシュにフォールバックする。
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Firebase SDK(gstatic.com)やRealtime Database通信など他オリジンへのリクエストは
+  // キャッシュに固定せずブラウザ標準の挙動に任せる（オフライン用途はアプリ本体のみが対象）。
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   const isAppShell = event.request.mode === 'navigate' || APP_SHELL.some((path) => event.request.url.endsWith(path.replace('./', '')));
   if (isAppShell) {
     event.respondWith(

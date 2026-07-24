@@ -500,9 +500,117 @@
     .mobile-controls .row{gap:6px;}
     .mobile-controls button{height:50px;font-size:18px;}
   }
+
+  .online-fab{
+    position:fixed;
+    top:max(12px, env(safe-area-inset-top));
+    right:max(12px, env(safe-area-inset-right));
+    z-index:45;
+    width:44px;height:44px;
+    padding:0;
+    font-size:19px;
+    background:rgba(45,226,230,.14);
+    color:var(--cyan);
+    border:1.5px solid rgba(45,226,230,.5);
+    box-shadow:0 0 14px rgba(45,226,230,.16);
+  }
+  .online-fab:active{background:rgba(45,226,230,.28);transform:scale(.95);}
+
+  .online-view{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+  .online-view[hidden]{display:none;}
+  .online-desc{margin:0;color:var(--sub);font-size:13px;font-weight:500;}
+  .online-divider{text-align:center;color:var(--sub);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .join-row{display:flex;gap:8px;}
+  .join-row input{
+    flex:1;min-width:0;
+    background:rgba(19,18,39,.8);
+    border:1.5px solid rgba(255,255,255,.14);
+    border-radius:8px;
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    padding:0 12px;
+    text-align:center;
+  }
+  .join-row input:focus{outline:none;border-color:rgba(45,226,230,.6);}
+  .online-error{margin:0;color:var(--pink);font-size:12px;font-weight:600;min-height:16px;}
+  .room-code-display{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:32px;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-align:center;
+    color:var(--cyan);
+    text-shadow:0 0 16px rgba(45,226,230,.4);
+    background:rgba(45,226,230,.08);
+    border:1px solid rgba(45,226,230,.3);
+    border-radius:10px;
+    padding:12px;
+  }
+  .online-status{margin:0;text-align:center;color:var(--sub);font-size:13px;font-weight:600;}
+  .countdown-number{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:56px;
+    font-weight:800;
+    text-align:center;
+    color:var(--pink);
+    text-shadow:0 0 24px rgba(255,61,174,.6);
+  }
+
+  .opponent-panel{
+    position:absolute;
+    top:10px; right:10px;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    background:rgba(8,8,18,.85);
+    border:1px solid rgba(45,226,230,.3);
+    border-radius:8px;
+    padding:6px 8px;
+    z-index:4;
+  }
+  .opponent-panel.show{display:flex;}
+  .opponent-label{margin:0;font-size:9px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;}
+  .opponent-mini{display:block;border-radius:4px;background:#0A0A13;}
+  .opponent-lines{margin:0;font-size:10px;font-weight:700;color:var(--cyan);}
+
+  .garbage-bar{
+    position:absolute;
+    top:10px; left:10px; bottom:10px;
+    width:8px;
+    display:none;
+    flex-direction:column;
+    justify-content:flex-end;
+    background:rgba(255,255,255,.06);
+    border-radius:4px;
+    overflow:hidden;
+    z-index:4;
+  }
+  .garbage-bar.show{display:flex;}
+  .garbage-fill{
+    width:100%;
+    height:0%;
+    background:linear-gradient(0deg, var(--pink), var(--orange));
+    box-shadow:0 0 10px rgba(255,61,174,.5);
+    transition:height .2s ease;
+  }
+
+  @media (max-width:760px){
+    .opponent-panel{top:4px;right:4px;padding:4px 6px;}
+    .opponent-mini{width:28px;height:56px;}
+    .opponent-label{font-size:8px;}
+    .opponent-lines{font-size:9px;}
+    .garbage-bar{top:4px;left:4px;bottom:4px;width:6px;}
+  }
 </style>
 </head>
 <body>
+
+<button class="online-fab" id="onlineFab" aria-label="オンライン対戦" title="オンライン対戦">🌐</button>
 
 <div class="app">
 
@@ -545,6 +653,12 @@
         <p id="overlayText">矢印キーで移動・回転、スペースでハードドロップ。落ちてくるミノを積んでラインを消そう。</p>
         <button id="startBtn">スタート</button>
       </div>
+      <div class="opponent-panel" id="opponentPanel">
+        <p class="opponent-label" id="opponentLabel">相手</p>
+        <canvas class="opponent-mini" id="opponentBoard" width="60" height="120"></canvas>
+        <p class="opponent-lines"><span id="opponentLines">0</span> lines</p>
+      </div>
+      <div class="garbage-bar" id="garbageBar"><div class="garbage-fill" id="garbageFill"></div></div>
     </div>
     <div class="controls-hint">
       <span class="key"><b>←→</b> 移動</span>
@@ -610,6 +724,46 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="onlineModal">
+  <div class="modal">
+    <h2>🌐 オンライン対戦</h2>
+
+    <div class="online-view" id="onlineViewMenu">
+      <p class="online-desc">友達とルームコードを共有して1対1対戦できます。</p>
+      <button id="createRoomBtn">ルームを作る</button>
+      <div class="online-divider">または</div>
+      <div class="join-row">
+        <input type="text" id="joinCodeInput" maxlength="6" placeholder="ルームコード" autocomplete="off" autocapitalize="characters">
+        <button class="secondary" id="joinRoomBtn">参加</button>
+      </div>
+      <p class="online-error" id="onlineError"></p>
+    </div>
+
+    <div class="online-view" id="onlineViewWaiting" hidden>
+      <p class="online-desc">このコードを相手に共有してください</p>
+      <div class="room-code-display" id="roomCodeDisplay">------</div>
+      <button class="secondary" id="copyLinkBtn">リンクをコピー</button>
+      <p class="online-status" id="waitingStatus">対戦相手を待っています…</p>
+    </div>
+
+    <div class="online-view" id="onlineViewCountdown" hidden>
+      <div class="countdown-number" id="countdownNumber">3</div>
+      <p class="online-status">まもなく対戦開始</p>
+    </div>
+
+    <button class="modal-close secondary" id="onlineCloseBtn">閉じる</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="matchResultModal">
+  <div class="modal">
+    <h2 id="matchResultTitle">WIN!</h2>
+    <p id="matchResultText"></p>
+    <button id="rematchBtn">もう一度対戦</button>
+    <button class="modal-close secondary" id="leaveRoomBtn">メニューに戻る</button>
+  </div>
+</div>
+
 <script>
 (function(){
   const COLS = 10, ROWS = 20, CELL = 24;
@@ -620,7 +774,7 @@
 
   const COLORS = {
     I:'#5B8CFF', O:'#FFC93E', T:'#C86CFF', S:'#3EE087',
-    Z:'#FF5C7A', J:'#4C6BFF', L:'#FF9A3E'
+    Z:'#FF5C7A', J:'#4C6BFF', L:'#FF9A3E', GARBAGE:'#5A5866'
   };
 
   const SHAPES = {
@@ -683,6 +837,19 @@
   let clearFlashUntil = 0;
   let combo = 0;
   let audioContext = null;
+  let rngFn = Math.random;
+  let gameOverPending = false;
+  let onlineActive = false;
+
+  function mulberry32(seed){
+    let a = seed >>> 0;
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
 
   const LINE_SCORES = {1:100, 2:300, 3:500, 4:800};
   const SETTINGS_KEY = 'tetris_settings_v1';
@@ -722,7 +889,7 @@
   function refillBag(){
     const arr = [...TYPES];
     for(let i=arr.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
+      const j = Math.floor(rngFn()*(i+1));
       [arr[i],arr[j]]=[arr[j],arr[i]];
     }
     bag.push(...arr);
@@ -774,6 +941,20 @@
       board.splice(y,1);
       board.unshift(Array(COLS).fill(null));
     });
+  }
+
+  function applyGarbage(n){
+    if(n<=0) return;
+    let overflow = false;
+    for(let i=0;i<n;i++){
+      if(board[0].some(c=>c)) overflow = true;
+      board.shift();
+      const hole = Math.floor(Math.random()*COLS);
+      const row = Array(COLS).fill('GARBAGE');
+      row[hole] = null;
+      board.push(row);
+    }
+    if(overflow) gameOverPending = true;
   }
 
   function showScorePop(amount, rowIndex){
@@ -835,6 +1016,7 @@
       setTimeout(()=>{
         removeRows(full);
         updateScore(full.length, avgRow);
+        if(window.TetrisEngine && window.TetrisEngine.hooks.onLineClear) window.TetrisEngine.hooks.onLineClear(full.length, combo);
         clearingRows = [];
         running = true;
         afterLock();
@@ -846,10 +1028,15 @@
   }
 
   function afterLock(){
+    gameOverPending = false;
+    const hooks = window.TetrisEngine && window.TetrisEngine.hooks;
+    const garbage = hooks && hooks.beforeSpawn ? (hooks.beforeSpawn() || 0) : 0;
+    applyGarbage(garbage);
+    if(hooks && hooks.onBoardChange) hooks.onBoardChange(board);
     current = spawnPiece();
     canHold = true;
     renderSide();
-    if(collides(current,0,0)){
+    if(gameOverPending || collides(current,0,0)){
       endGame();
       return;
     }
@@ -1182,7 +1369,10 @@
     playSound('gameover');
     const result = registerScore(score);
     const isTop = result.madeItIndex > -1 && result.madeItIndex < 5;
-    showOverlay('Game Over', `スコア ${score.toLocaleString()} ${isTop ? '🎉 TOP5入り！' : ''}`, 'もう一度プレイ');
+    if(!onlineActive){
+      showOverlay('Game Over', `スコア ${score.toLocaleString()} ${isTop ? '🎉 TOP5入り！' : ''}`, 'もう一度プレイ');
+    }
+    if(window.TetrisEngine && window.TetrisEngine.hooks.onGameOver) window.TetrisEngine.hooks.onGameOver(score, lines);
   }
 
   function showOverlay(title, text, btnLabel){
@@ -1215,6 +1405,8 @@
 
   document.getElementById('startBtn').addEventListener('click', ()=>{
     if(paused){ paused = false; hideOverlay(); return; }
+    onlineActive = false;
+    rngFn = Math.random;
     resetGame();
     running = true;
     paused = false;
@@ -1302,8 +1494,36 @@
   renderSide();
   draw();
   rafId = requestAnimationFrame(loop);
+
+  window.TetrisEngine = {
+    hooks: { onLineClear:null, onBoardChange:null, beforeSpawn:null, onGameOver:null },
+    setRngSeed(seed){ rngFn = mulberry32(seed); },
+    startOnlineMatch(seed){
+      onlineActive = true;
+      this.setRngSeed(seed);
+      resetGame();
+      running = true;
+      paused = false;
+      gameOver = false;
+      hideOverlay();
+    },
+    stop(){ running = false; paused = true; },
+    exitOnlineMatch(){
+      onlineActive = false;
+      rngFn = Math.random;
+    },
+    backToMenu(){
+      onlineActive = false;
+      rngFn = Math.random;
+      running = false;
+      paused = false;
+      gameOver = true;
+      showOverlay('Ready?', 'オンライン対戦を終了しました。', 'スタート');
+    },
+  };
 })();
 </script>
+<script type="module" src="netplay.js"></script>
 
 </body>
 </html>
